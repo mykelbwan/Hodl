@@ -796,13 +796,19 @@ contract HodlTest is Test {
 }
 ```
 
-# Environment variables
 
-    1. ETHERSCAN_KEY="" -> etherscan api key for automatic smart contract verification
-    . S_URL="" -> sepolia rpc url
-    2. T_KEY="" -> your dev private key (security warning) don't use your private key with real funds
-    3. ANVIL_RPC= "http://127.0.0.1:8545" -> ANVIL DEFAULT RPC URL
-    4. A_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" -> ANVIL DUMMY PRIVATE KEY
+# Add this variables to your **.env** file
+
+    1. ETHERSCAN_KEY="replace with your etherscan api key" -> etherscan api key for automatic smart contract verification
+   
+    2. S_URL="replace with your rpc url" -> sepolia rpc url
+
+    3. T_KEY="replace with your developer private dev" -> your dev private key (security warning) don't use your private key with real funds
+ 
+    4. ANVIL_RPC= "http://127.0.0.1:8545" -> ANVIL DEFAULT RPC URL
+
+    5. A_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" -> ANVIL DUMMY PRIVATE KEY
+
 
 # To run the project, you will need:
 
