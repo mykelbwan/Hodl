@@ -27,21 +27,13 @@ contract Hodl is ReentrancyGuard {
     bool private pauseDeposits = false;
     bool private pauseWithdrawals = false;
 
-    mapping(address depositor => mapping(address token => uint256 amount))
-        private deposits;
-    mapping(address depositor => mapping(address token => uint256 unlockTime))
-        private unlockTime;
+    mapping(address depositor => mapping(address token => uint256 amount)) private deposits;
+    mapping(address depositor => mapping(address token => uint256 unlockTime)) private unlockTime;
     mapping(address depositor => address[] token) private userTokens;
-    mapping(address depositor => mapping(address token => bool condition))
-        private hasToken;
+    mapping(address depositor => mapping(address token => bool condition)) private hasToken;
 
     event Withdrawal(address user, address token, uint256 balance);
-    event Deposit(
-        address user,
-        address token,
-        uint256 balance,
-        uint256 lockPeriod
-    );
+    event Deposit(address user, address token, uint256 balance, uint256 lockPeriod);
 
     modifier onlyAdmin() {
         _onlyAdmin();
@@ -73,11 +65,7 @@ contract Hodl is ReentrancyGuard {
     /// @param lockPeriod The lock duration in days
     /// @dev Uses SafeERC20 for safe transfer, reverts if amount is zero
     /// Emits a {Deposit} event
-    function depositErc20(
-        address token,
-        uint256 amount,
-        uint256 lockPeriod
-    ) external nonReentrant {
+    function depositErc20(address token, uint256 amount, uint256 lockPeriod) external nonReentrant {
         address _msgSender = msg.sender;
         IERC20(token).safeTransferFrom(_msgSender, address(this), amount);
         setDeposit(_msgSender, token, amount, lockPeriod);
@@ -119,7 +107,7 @@ contract Hodl is ReentrancyGuard {
 
         // --- Interactions (do transfers last) ---
         if (token == NATIVE_TOKEN) {
-            (bool success, ) = _msgSender.call{value: balance}("");
+            (bool success,) = _msgSender.call{value: balance}("");
             if (!success) revert Hodl__EthTransferFailed();
         } else {
             IERC20(token).safeTransfer(_msgSender, balance);
@@ -141,9 +129,7 @@ contract Hodl is ReentrancyGuard {
     /// @notice Check if the unlock timestamp has passed
     /// @param unlockTimestamp The timestamp to check
     /// @return True if the current time is greater than or equal to unlockTimestamp
-    function lockMaturity(
-        uint256 unlockTimestamp
-    ) internal view returns (bool) {
+    function lockMaturity(uint256 unlockTimestamp) internal view returns (bool) {
         return block.timestamp >= unlockTimestamp;
     }
 
@@ -151,10 +137,7 @@ contract Hodl is ReentrancyGuard {
     /// @param user The address of the depositor
     /// @param token The token address
     /// @return True if withdrawal is allowed
-    function canWithdraw(
-        address user,
-        address token
-    ) internal view returns (bool) {
+    function canWithdraw(address user, address token) internal view returns (bool) {
         uint256 userUnlockTime = unlockTime[user][token];
         return lockMaturity(userUnlockTime);
     }
@@ -170,10 +153,7 @@ contract Hodl is ReentrancyGuard {
     /// @param msgSender The user address
     /// @param token The token address
     /// @return amount The balance deposited
-    function getBalance(
-        address msgSender,
-        address token
-    ) internal view returns (uint256 amount) {
+    function getBalance(address msgSender, address token) internal view returns (uint256 amount) {
         amount = deposits[msgSender][token];
     }
 
@@ -182,16 +162,10 @@ contract Hodl is ReentrancyGuard {
     /// @return tokens Array of token addresses
     /// @return amounts Array of balances per token
     /// @return lock Array of unlock timestamps per token
-    function getUserBalances(
-        address user
-    )
+    function getUserBalances(address user)
         external
         view
-        returns (
-            address[] memory tokens,
-            uint256[] memory amounts,
-            uint256[] memory lock
-        )
+        returns (address[] memory tokens, uint256[] memory amounts, uint256[] memory lock)
     {
         uint256 length = userTokens[user].length;
         tokens = new address[](length);
@@ -210,10 +184,7 @@ contract Hodl is ReentrancyGuard {
     /// @param msgSender The user address
     /// @param token The token address
     /// @return lock Unlock timestamp
-    function getLock(
-        address msgSender,
-        address token
-    ) internal view returns (uint256 lock) {
+    function getLock(address msgSender, address token) internal view returns (uint256 lock) {
         lock = unlockTime[msgSender][token];
     }
 
@@ -237,12 +208,7 @@ contract Hodl is ReentrancyGuard {
     /// @param token The token address
     /// @param amount Amount to deposit
     /// @param lockPeriod Lock duration in days
-    function setDeposit(
-        address msgSender,
-        address token,
-        uint256 amount,
-        uint256 lockPeriod
-    ) internal {
+    function setDeposit(address msgSender, address token, uint256 amount, uint256 lockPeriod) internal {
         if (pauseDeposits) revert Hodl__DepositsPaused();
         if (amount == 0) revert Hodl__AmountExpected();
 
@@ -262,15 +228,14 @@ contract Hodl is ReentrancyGuard {
         } else {
             // If current unlockTime is in the future, extend from there, else from now
             uint256 currentUnlock = unlockTime[msgSender][token];
-            uint256 baseTime = currentUnlock > block.timestamp
-                ? currentUnlock
-                : block.timestamp;
+            uint256 baseTime = currentUnlock > block.timestamp ? currentUnlock : block.timestamp;
 
             unlockTime[msgSender][token] = baseTime + lockInSeconds;
         }
     }
 
-    /**@notice external function that changes the administrator of this contract
+    /**
+     * @notice external function that changes the administrator of this contract
      * @notice onlyAdmin modifier checks if message sender != admin
      * @param newAdmin the address of the new administrator
      */

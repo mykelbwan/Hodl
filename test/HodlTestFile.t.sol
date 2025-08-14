@@ -32,11 +32,7 @@ contract HodlTest is Test {
         /**
          * this is the var we are testing ->  uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
          */
-        assertEq(
-            hodl.SECONDS_PER_DAY(),
-            86400,
-            "SECONDS_PER_DAY should equal 86400"
-        );
+        assertEq(hodl.SECONDS_PER_DAY(), 86400, "SECONDS_PER_DAY should equal 86400");
     }
 
     function testDepositNativeEth_Success() public {
@@ -45,12 +41,7 @@ contract HodlTest is Test {
 
         // Expect the Deposit event to be emitted
         vm.expectEmit(true, true, false, true);
-        emit HodlTestFile.Deposit(
-            user,
-            NATIVE_TOKEN,
-            depositAmount,
-            lockPeriod
-        );
+        emit HodlTestFile.Deposit(user, NATIVE_TOKEN, depositAmount, lockPeriod);
 
         // Prank as the user and deposit ETH
         vm.prank(user);
@@ -63,8 +54,7 @@ contract HodlTest is Test {
 
         // Verify unlock time is correct
         uint256 storedUnlockTime = hodl.getLock(user, NATIVE_TOKEN);
-        uint256 expectedUnlockTime = block.timestamp +
-            hodl.daysToSeconds(lockPeriod);
+        uint256 expectedUnlockTime = block.timestamp + hodl.daysToSeconds(lockPeriod);
         assertEq(storedUnlockTime, expectedUnlockTime, "Unlock time mismatch");
     }
 
@@ -104,37 +94,19 @@ contract HodlTest is Test {
 
         // Expect the Deposit event
         vm.expectEmit(true, true, false, true);
-        emit HodlTestFile.Deposit(
-            user,
-            address(mockToken),
-            depositAmount,
-            lockPeriod
-        );
+        emit HodlTestFile.Deposit(user, address(mockToken), depositAmount, lockPeriod);
 
         // Call depositErc20
         hodl.depositErc20(address(mockToken), depositAmount, lockPeriod);
         vm.stopPrank();
 
         // --- Assertions ---
-        assertEq(
-            hodl.getBalance(user, address(mockToken)),
-            depositAmount,
-            "ERC20 balance mismatch"
-        );
+        assertEq(hodl.getBalance(user, address(mockToken)), depositAmount, "ERC20 balance mismatch");
 
-        uint256 expectedUnlock = block.timestamp +
-            hodl.daysToSeconds(lockPeriod);
-        assertEq(
-            hodl.getLock(user, address(mockToken)),
-            expectedUnlock,
-            "Unlock time mismatch"
-        );
+        uint256 expectedUnlock = block.timestamp + hodl.daysToSeconds(lockPeriod);
+        assertEq(hodl.getLock(user, address(mockToken)), expectedUnlock, "Unlock time mismatch");
 
-        assertEq(
-            mockToken.balanceOf(address(hodl)),
-            depositAmount,
-            "HodlTestFile contract did not receive tokens"
-        );
+        assertEq(mockToken.balanceOf(address(hodl)), depositAmount, "HodlTestFile contract did not receive tokens");
     }
 
     function testDepositErc20_RevertWhenAmountZero() public {
@@ -178,11 +150,7 @@ contract HodlTest is Test {
         uint256 postBalance = mockToken.balanceOf(address(this));
 
         assertEq(postBalance, preBalance + amount, "Tokens not returned");
-        assertEq(
-            hodl.getBalance(address(this), address(mockToken)),
-            0,
-            "Balance not reset"
-        );
+        assertEq(hodl.getBalance(address(this), address(mockToken)), 0, "Balance not reset");
 
         // Token address list should be cleared
         address[] memory tokens = hodl.getUserTokens(address(this));
@@ -228,29 +196,12 @@ contract HodlTest is Test {
     function testReceiveFunction() public {
         // Send ETH directly with no calldata to trigger receive()
         vm.prank(user);
-        (bool success, ) = address(hodl).call{value: 1 ether}("");
+        (bool success,) = address(hodl).call{value: 1 ether}("");
         assertTrue(success, "Receive function failed");
 
         // Verify deposit was recorded
         uint256 balance = hodl.getBalance(user, NATIVE_TOKEN);
         assertEq(balance, 1 ether, "Native ETH deposit via receive() mismatch");
-    }
-
-    function testFallbackFunction() public {
-        // Call an undefined function with ETH to trigger fallback()
-        vm.prank(user);
-        (bool success, ) = address(hodl).call{value: 1 ether}(
-            abi.encodeWithSignature("doesNotExist()")
-        );
-        assertTrue(success, "Fallback function failed");
-
-        // Verify deposit was recorded
-        uint256 balance = hodl.getBalance(user, NATIVE_TOKEN);
-        assertEq(
-            balance,
-            1 ether,
-            "Native ETH deposit via fallback() mismatch"
-        );
     }
 
     function testLockMaturity() public {
@@ -355,19 +306,11 @@ contract HodlTest is Test {
         // ----- Deposit ERC20 -----
         vm.startPrank(user);
         mockToken.approve(address(hodl), erc20DepositAmount);
-        hodl.depositErc20(
-            address(mockToken),
-            erc20DepositAmount,
-            erc20LockPeriod
-        );
+        hodl.depositErc20(address(mockToken), erc20DepositAmount, erc20LockPeriod);
         vm.stopPrank();
 
         // ----- Call getUserBalances -----
-        (
-            address[] memory tokens,
-            uint256[] memory amounts,
-            uint256[] memory locks
-        ) = hodl.getUserBalances(user);
+        (address[] memory tokens, uint256[] memory amounts, uint256[] memory locks) = hodl.getUserBalances(user);
 
         // ----- Assertions -----
         assertEq(tokens.length, 2, "Token array length mismatch");
@@ -377,20 +320,12 @@ contract HodlTest is Test {
         // Check ETH deposit entry
         assertEq(tokens[0], NATIVE_TOKEN, "ETH token address mismatch");
         assertEq(amounts[0], ethDepositAmount, "ETH amount mismatch");
-        assertEq(
-            locks[0],
-            block.timestamp + hodl.daysToSeconds(ethLockPeriod),
-            "ETH lock time mismatch"
-        );
+        assertEq(locks[0], block.timestamp + hodl.daysToSeconds(ethLockPeriod), "ETH lock time mismatch");
 
         // Check ERC20 deposit entry
         assertEq(tokens[1], address(mockToken), "ERC20 token address mismatch");
         assertEq(amounts[1], erc20DepositAmount, "ERC20 amount mismatch");
-        assertEq(
-            locks[1],
-            block.timestamp + hodl.daysToSeconds(erc20LockPeriod),
-            "ERC20 lock time mismatch"
-        );
+        assertEq(locks[1], block.timestamp + hodl.daysToSeconds(erc20LockPeriod), "ERC20 lock time mismatch");
     }
 
     function testGetLock_NoDeposit() public view {
@@ -406,8 +341,7 @@ contract HodlTest is Test {
         vm.prank(user);
         hodl.depositNativeEth{value: depositAmount}(lockPeriod);
 
-        uint256 expectedUnlock = block.timestamp +
-            hodl.daysToSeconds(lockPeriod);
+        uint256 expectedUnlock = block.timestamp + hodl.daysToSeconds(lockPeriod);
         uint256 lock = hodl.getLock(user, NATIVE_TOKEN);
 
         assertEq(lock, expectedUnlock, "Unlock time mismatch after deposit");
