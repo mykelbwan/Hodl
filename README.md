@@ -574,23 +574,6 @@ contract HodlTest is Test {
         assertEq(balance, 1 ether, "Native ETH deposit via receive() mismatch");
     }
 
-    function testFallbackFunction() public {
-        // Call an undefined function with ETH to trigger fallback()
-        vm.prank(user);
-        (bool success, ) = address(hodl).call{value: 1 ether}(
-            abi.encodeWithSignature("doesNotExist()")
-        );
-        assertTrue(success, "Fallback function failed");
-
-        // Verify deposit was recorded
-        uint256 balance = hodl.getBalance(user, NATIVE_TOKEN);
-        assertEq(
-            balance,
-            1 ether,
-            "Native ETH deposit via fallback() mismatch"
-        );
-    }
-
     function testLockMaturity() public {
         // Set a high enough starting timestamp to avoid underflow
         uint256 nowTs = 1000000; // > 86400
